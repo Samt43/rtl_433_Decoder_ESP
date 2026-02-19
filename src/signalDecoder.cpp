@@ -111,7 +111,12 @@ void rtl_433_Decoder::rtl_433_DecoderTask(void* pvParameters) {
 }
 
 void rtl_433_Decoder::processSignal(pulse_data_t* rtl_pulses,void* ctx) {
-    decode_job_t *job=(decode_job_t*) malloc (sizeof(decode_job_t));
+    decode_job_t* job = (decode_job_t*)heap_caps_calloc(1, sizeof(decode_job_t), MALLOC_CAP_INTERNAL);
+    if (!job) {
+      logprintfLn(LOG_ERR, "ERROR: Failed to allocate memory for decode_job_t");
+      free(rtl_pulses);
+      return;
+    }
     job->rtl_pulses=rtl_pulses;
     job->ctx=ctx;
 
@@ -128,6 +133,10 @@ void rtl_433_Decoder::processSignal(pulse_data_t* rtl_pulses,void* ctx) {
 
 void rtl_433_Decoder::processRaw(const std::vector<int32_t> &rawdata,void* ctx) {
   pulse_data_t* rtl_pulses = (pulse_data_t*)heap_caps_calloc(1, sizeof(pulse_data_t), MALLOC_CAP_INTERNAL);
+  if (!rtl_pulses) {
+    logprintfLn(LOG_ERR, "ERROR: Failed to allocate memory for rtl_pulses");
+    return;
+  }
   int maxsize = sizeof(rtl_pulses->pulse) / sizeof(*rtl_pulses->pulse);
   int rawcount=rawdata.size();
   int i=0;
@@ -147,7 +156,11 @@ void rtl_433_Decoder::processRaw(const std::vector<int32_t> &rawdata,void* ctx) 
 
 void rtl_433_Decoder::processRFRaw(char const *p,void* ctx) {
   pulse_data_t* rtl_pulses = (pulse_data_t*)heap_caps_calloc(1, sizeof(pulse_data_t), MALLOC_CAP_INTERNAL);
-
+  if (!rtl_pulses) {
+    logprintfLn(LOG_ERR, "ERROR: Failed to allocate memory for rtl_pulses");
+    return;
+  }
+  
   if (rfraw_parse(rtl_pulses,p)) {
     processSignal(rtl_pulses,ctx);
   } else {
